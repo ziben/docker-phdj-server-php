@@ -1,0 +1,51 @@
+version: '3'
+services:
+  nginx:
+    build: ./nginx
+    image: blzj/nginx:alpine
+    ports:
+      - 10009:80
+    environment:
+      VIRTUAL_HOST: phdj.test.s-si.net
+    volumes:
+      - /srv/blzj/www:/var/www/html/blzj
+      - ./nginx/blzj.conf:/etc/nginx/conf.d/default.conf
+      - phpsocket:/var/run
+      - log_rsyslog:/var/run/rsyslog/dev 
+    restart: unless-stopped
+
+  php:
+    build: ./php
+    image: blzj/php:5-fpm-alpine
+    environment:
+      DB_URL: rm-2ze2x4mzcrbtop7ww.mysql.rds.aliyuncs.com
+    volumes:
+      - /srv/blzj/www:/var/www/html/blzj
+      - ./php/xhgui.config.php:/var/www/html/xhgui/config/config.php
+      - ./php/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+      - /srv/blzj/log:/log
+      - phpsocket:/var/run
+      - log_rsyslog:/var/run/rsyslog/dev 
+    networks:
+      - default
+      - test
+    restart: unless-stopped
+
+  java:
+    build: ./java
+    image: blzj/java:7-jre-alpine
+    expose:
+      - 8019
+    volumes:
+      - /srv/blzj/www:/phpstudy/www/blzj
+    command: ["java", "-jar", "/phpstudy/www/blzj/jar/JavaBridge.jar", "SERVLET:8019"]
+    restart: unless-stopped
+
+networks:
+  test:
+    external: true
+
+volumes:
+  phpsocket:
+  log_rsyslog:
+    external: true
